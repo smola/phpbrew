@@ -43,7 +43,12 @@ export PATH="$(pwd):$PATH"
 
 phpbrew init
 
+#FIXME: curl for retry download
+apt-get install -y --no-install-recommends \
+	curl
+
 phpbrew install \
+	--downloader=curl \
 	--stdout \
 	--no-clean \
 	--jobs="$(nproc)" \

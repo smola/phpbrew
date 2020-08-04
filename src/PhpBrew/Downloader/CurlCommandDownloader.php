@@ -12,6 +12,15 @@ class CurlCommandDownloader extends BaseDownloader
         //todo proxy setting
         $command = array('curl');
 
+        // retry
+        // https://bugs.php.net/bug.php?id=79445
+        $command[] = '--retry';
+        $command[] = '3';
+        $command[] = '--retry-delay';
+        $command[] = '5';
+        $command[] = '--connect-timeout';
+        $command[] = '10';
+
         if ($proxy = $this->options->{'http-proxy'}) {
             $this->logger->warn('http proxy is not support by this download.');
         }
