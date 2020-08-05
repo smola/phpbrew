@@ -29,6 +29,7 @@ apt-get install -y --no-install-recommends \
 # minimum build requirements
 apt-get install -y --no-install-recommends \
 	build-essential \
+	autoconf \
 	pkg-config
 # xml
 apt-get install -y --no-install-recommends \
@@ -47,21 +48,23 @@ phpbrew init
 apt-get install -y --no-install-recommends \
 	curl
 
+if [ -n ${DEBUG:-} ]; then
+	DEBUG_ARGS="--no-clean --stdout"
+else
+	DEBUG_ARGS=""
+fi
+
 phpbrew install \
 	--downloader=curl \
-	--stdout \
-	--no-clean \
+	${DEBUG_ARGS} \
 	--jobs="$(nproc)" \
 	"${PHP_VERSION}" \
-	+xml +bz2
+	+xml +bz2 +phar
 
 . "$HOME/.phpbrew/bashrc"
 
 phpbrew switch "$(phpbrew list | tail -n 1 | tr -d '[:space:]' | tr -d '*')"
 
-# extension build
-apt-get install -y --no-install-recommends \
-	autoconf
 
 # curl
 apt-get install -y --no-install-recommends \
@@ -83,8 +86,13 @@ phpbrew ext install ctype
 phpbrew ext install posix
 
 # readline
-apt-get install -y --no-install-recommends \
-	libedit-dev
+if [ "${PHP_VERSION//./}" -ge 54 ]; then
+	apt-get install -y --no-install-recommends \
+		libedit-dev
+else
+	apt-get install -y --no-install-recommends \
+		libreadline-dev
+fi
 phpbrew ext install readline
 
 # zip
@@ -97,5 +105,14 @@ phpbrew ext install pcntl
 
 # bcmath
 phpbrew ext install bcmath
+
+# mbstring
+phpbrew ext install mbstring
+
+# pcre
+#phpbrew ext install pcre
+
+# dom
+phpbrew ext install dom
 
 #TODO: build with all + test

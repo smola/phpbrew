@@ -65,8 +65,14 @@ jobs:
   integration-test-linux:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         suite:
+          - 'it-ubuntu20.04-php5.6'
+          - 'it-ubuntu20.04-php7.0'
+          - 'it-ubuntu20.04-php7.1'
+          - 'it-ubuntu20.04-php7.2'
+          - 'it-ubuntu20.04-php7.3'
           - 'it-ubuntu20.04-php7.4'
     name: "integration-test ${{ matrix.suite }}"
     needs: dist
