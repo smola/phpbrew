@@ -1,0 +1,96 @@
+#!/bin/sh
+set -ex
+
+# If not running in bash, install it and re-exec
+if [ -z ${BASH_SOURCE} ]; then
+	if ! command -v bash; then
+		# Alpine-only, but the rest of our test targets have bash
+		apk add --no-cache bash
+	fi
+	exec bash "$0" "$@"
+fi
+
+set -Euo pipefail
+
+if [ -z "${1:-}" ]; then
+	echo "Usage: $0 <php-version>"
+	exit 1
+fi
+PHP_VERSION="$1"
+
+export DEBIAN_FRONTEND=noninteractive 
+
+apt-get update
+# bare minimum requirements
+apt-get install -y --no-install-recommends \
+	ca-certificates \
+	php \
+	php-bz2
+# minimum build requirements
+apt-get install -y --no-install-recommends \
+	build-essential \
+	pkg-config
+# xml
+apt-get install -y --no-install-recommends \
+	libxml2-dev \
+	libxslt1-dev
+# bz2
+apt-get install -y --no-install-recommends \
+	libbz2-dev
+
+cd "$(dirname $BASH_SOURCE)/.."
+export PATH="$(pwd):$PATH"
+
+phpbrew init
+
+phpbrew install \
+	--stdout \
+	--no-clean \
+	--jobs="$(nproc)" \
+	"${PHP_VERSION}" \
+	+xml +bz2
+
+. "$HOME/.phpbrew/bashrc"
+
+phpbrew switch "$(phpbrew list | tail -n 1 | tr -d '[:space:]' | tr -d '*')"
+
+# extension build
+apt-get install -y --no-install-recommends \
+	autoconf
+
+# curl
+apt-get install -y --no-install-recommends \
+	libcurl4-openssl-dev
+phpbrew ext install curl
+
+# openssl
+apt-get install -y --no-install-recommends \
+	libssl-dev
+phpbrew ext install openssl
+
+# json
+phpbrew ext install json
+
+# ctype
+phpbrew ext install ctype
+
+# posix
+phpbrew ext install posix
+
+# readline
+apt-get install -y --no-install-recommends \
+	libedit-dev
+phpbrew ext install readline
+
+# zip
+apt-get install -y --no-install-recommends \
+	libzip-dev
+phpbrew ext install zip
+
+# pcntl
+phpbrew ext install pcntl
+
+# bcmath
+phpbrew ext install bcmath
+
+#TODO: build with all + test

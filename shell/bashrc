@@ -12,8 +12,8 @@
 # PHPBREW_PATH: the bin path of the current php.
 # PHPBREW_SYSTEM_PHP: the path to the system php binary.
 
-[[ -z "$PHPBREW_ROOT" ]] && export PHPBREW_ROOT="$HOME/.phpbrew"
-[[ -z "$PHPBREW_HOME" ]] && export PHPBREW_HOME="$HOME/.phpbrew"
+[[ -z "${PHPBREW_ROOT:-}" ]] && export PHPBREW_ROOT="$HOME/.phpbrew"
+[[ -z "${PHPBREW_HOME:-}" ]] && export PHPBREW_HOME="$HOME/.phpbrew"
 
 # The minimal PHP version that PhpBrew supports as interpreter
 MIN_PHP_VERSION="7.2.0"
@@ -38,7 +38,7 @@ function __phpbrew_php_exec()
     fi
 
     # Force the usage of the system PHP interpreter if it's set
-    if [[ -n "$PHPBREW_SYSTEM_PHP" ]] ; then
+    if [[ -n "${PHPBREW_SYSTEM_PHP:-}" ]] ; then
         command "$PHPBREW_SYSTEM_PHP" "$cmd" "$@"
     else
         command "$cmd" "$@"
@@ -116,13 +116,13 @@ function __phpbrew_set_path()
 {
     local PATH_WITHOUT_PHPBREW
 
-    if [[ -n "$PHPBREW_ROOT" ]] ; then
+    if [[ -n "${PHPBREW_ROOT:-}" ]] ; then
         PATH_WITHOUT_PHPBREW=$(p=$(echo $PATH | tr ":" "\n" | grep -v "^$PHPBREW_ROOT" | tr "\n" ":"); echo ${p%:})
     else
         PATH_WITHOUT_PHPBREW=$PATH
     fi
 
-    if [[ -z "$PHPBREW_PATH" ]]
+    if [[ -z "${PHPBREW_PATH:-}" ]]
     then
         export PATH=$PATH_WITHOUT_PHPBREW
     else
@@ -139,7 +139,7 @@ function __phpbrew_load_user_config()
     fi
 }
 
-if [[ -z "$PHPBREW_SKIP_INIT" ]]; then
+if [[ -z "${PHPBREW_SKIP_INIT:-}" ]]; then
     __phpbrew_load_user_config
 fi
 
@@ -546,7 +546,7 @@ function phpbrew_current_php_version() {
   fi
 }
 
-if [[ -n "$PHPBREW_SET_PROMPT" && "$PHPBREW_SET_PROMPT" == "1" ]]; then
+if [[ -n "${PHPBREW_SET_PROMPT:-}" && "$PHPBREW_SET_PROMPT" == "1" ]]; then
     export PS1="\w > \u@\h [\$(phpbrew_current_php_version)]\n\\$ "
 fi
 
@@ -602,7 +602,7 @@ function _phpbrewrc_load ()
     PHPBREW_LAST_DIR="$PWD"
 }
 
-if [[ -n "$PHPBREW_RC_ENABLE" ]]; then
+if [[ -n "${PHPBREW_RC_ENABLE:-}" ]]; then
     if [[ -n "$BASH_VERSION" ]]; then
         trap "_phpbrewrc_load" DEBUG
     fi

@@ -1,0 +1,80 @@
+name: ci
+on:
+  pull_request:
+  push:
+jobs:
+  dist:
+    runs-on: ubuntu-latest
+    name: "dist (php 7.4)"
+    container: "php:7.4"
+    steps:
+      - uses: actions/checkout@v2
+      - name: install dependencies
+        run: |
+          apt-get update
+          apt-get install -y libbz2-dev git make unzip
+          docker-php-ext-install bz2
+      - run: make deps
+      - run: make dist
+      - name: Upload phpbrew
+        uses: actions/upload-artifact@v2
+        with:
+          name: phpbrew
+          path: phpbrew
+  phpunit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version:
+          #FIXME: - '5.3'
+          - '5.4'
+          - '5.5'
+          - '5.6'
+          - '7.0'
+          - '7.1'
+          - '7.2'
+          - '7.3'
+          - '7.4'
+          #FIXME: - '8.0-rc'
+    name: "phpunit (php ${{ matrix.php-version }})"
+    container: "php:${{ matrix.php-version }}"
+    steps:
+      - uses: actions/checkout@v2
+      - name: install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --allow-unauthenticated git make unzip
+          # gd variant
+          apt-get install -y --allow-unauthenticated libfreetype6-dev libpng-dev libjpeg-dev libxpm-dev
+          # intl variant
+          apt-get install -y --allow-unauthenticated libicu-dev
+          # openssl variant
+          apt-get install -y --allow-unauthenticated libssl-dev openssl
+          # apxs2
+          apt-get install -y --allow-unauthenticated apache2
+          # xml
+          apt-get install -y --allow-unauthenticated libxml2-dev
+          if [ ${{ matrix.php-version }} = '5.4' ] || [ ${{ matrix.php-version }} = '5.3' ]; then
+            # mbstring
+            apt-get install -y --allow-unauthenticated libonig-dev
+            docker-php-ext-install mbstring
+          fi
+      - run: make deps
+      #TODO: TRAVIS=true to skip some heavy tests that are failing on GH
+      - run: TRAVIS=true make test
+  integration-test-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        suite:
+          - 'it-ubuntu20.04-php7.4'
+    name: "integration-test ${{ matrix.suite }}"
+    needs: dist
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download phpbrew
+        uses: actions/download-artifact@v2
+        with:
+          name: phpbrew
+      - run: chmod +x phpbrew
+      - run: make ${{ matrix.suite }}
